@@ -12,92 +12,71 @@ namespace Stacl
         {
             GeneratePlus(machine);
             GenerateMinus(machine);
-            GenerateMultiple(machine);
+            GenerateMultiply(machine);
             GenerateDivide(machine);
         }
 
         void GeneratePlus(StaclMachine machine)
         {
-            machine.Environment["+"] = new BuildInFunction(() =>
-            {
-                if (machine.ExeCount < 2)
-                {
-                    int available = machine.ExeCount;
-                    machine.Exe.Clear();
-                    machine.Exe.Push(Error.ArityError("+", 2, available));
-                }
-                else
-                {
-                    Value v1 = machine.Exe.Pop();
-                    Value v2 = machine.Exe.Pop();
-                    if (v1.Type != ValueType.Number || v2.Type != ValueType.Number)
-                        throw new NotImplementedException();
-                    machine.Exe.Push(new Integer(((Integer)v1).Value + ((Integer)v2).Value));
-                }
-            });
+            GenerateOperation(machine, "+", 2, l => l[0] + l[1], l => l[0] + l[1], null);
         }
 
         void GenerateMinus(StaclMachine machine)
         {
-            machine.Environment["-"] = new BuildInFunction(() =>
-            {
-                if (machine.Exe.Count < 2)
-                {
-                    int available = machine.ExeCount;
-                    machine.Exe.Clear();
-                    machine.Exe.Push(Error.ArityError("-", 2, available));
-                }
-                else
-                {
-                    Value v1 = machine.Exe.Pop();
-                    Value v2 = machine.Exe.Pop();
-                    if (v1.Type != ValueType.Number || v2.Type != ValueType.Number)
-                        throw new NotImplementedException();
-                    machine.Exe.Push(new Integer(((Integer)v2).Value - ((Integer)v1).Value));
-                }
-            });
+            GenerateOperation(machine, "-", 2, l => l[0] - l[1], l => l[0] - l[1], null);
         }
 
-        void GenerateMultiple(StaclMachine machine)
+        void GenerateMultiply(StaclMachine machine)
         {
-            machine.Environment["*"] = new BuildInFunction(() =>
-            {
-                if (machine.Exe.Count < 2)
-                {
-                    int available = machine.ExeCount;
-                    machine.Exe.Clear();
-                    machine.Exe.Push(Error.ArityError("*", 2, available));
-                }
-                else
-                {
-                    Value v1 = machine.Exe.Pop();
-                    Value v2 = machine.Exe.Pop();
-                    if (v1.Type != ValueType.Number || v2.Type != ValueType.Number)
-                        throw new NotImplementedException();
-                    machine.Exe.Push(new Integer(((Integer)v2).Value * ((Integer)v1).Value));
-                }
-            });
+            GenerateOperation(machine, "*", 2, l => l[0] * l[1], l => l[0] * l[1], null);
         }
 
         void GenerateDivide(StaclMachine machine)
         {
-            machine.Environment["/"] = new BuildInFunction(() =>
+            GenerateOperation(machine, "/", 2, l => l[0] / l[1], l => l[0] / l[1], new List<Func<double, bool>>() {
+                i => true,
+                i => {
+                    if (i == 0)
+                        machine.RaiseError(Error.DivisionError("/"));
+                    return i != 0;
+                }});
+        }
+
+        void GenerateOperation(StaclMachine machine, string token, int arity, Func<List<int>, int> intOp, Func<List<double>, double> floatOp, List<Func<double, bool>> customeErrors)
+        {
+            if (customeErrors != null && customeErrors.Count != arity)
+                throw new Exception();
+            machine.Environment[token] = new BuildInFunction(() =>
             {
-                if (machine.Exe.Count < 2)
+                if (machine.ExeCount < arity)
                 {
                     int available = machine.ExeCount;
-                    machine.Exe.Clear();
-                    machine.Exe.Push(Error.ArityError("/", 2, available));
+                    machine.RaiseError(Error.ArityError(token, arity, available));
                 }
                 else
                 {
-                    Value v1 = machine.Exe.Pop();
-                    Value v2 = machine.Exe.Pop();
-                    if (v1.Type != ValueType.Number || v2.Type != ValueType.Number)
-                        throw new NotImplementedException();
-                    if (((Integer)v2).Value == 0)
-                        throw new NotImplementedException();
-                    machine.Exe.Push(new Integer(((Integer)v2).Value / ((Integer)v1).Value));
+                    List<Value> values = new List<Value>();
+                    for (int i = 0; i < arity; i++)
+                        values.Add(machine.Exe.Pop());
+                    if (values.Any(v => v.Type != ValueType.Number))
+                    {
+                        machine.RaiseError(Error.TypeError(token, (values.FindIndex(v => v.Type != ValueType.Number)),
+                            ValueType.Number, values.First(v => v.Type != ValueType.Number).Type));
+                        return;
+                    }
+                    List<Number> numbers = values.Cast<Number>().ToList();
+                    if (customeErrors != null)
+                    {
+                        for (int i = 0; i < arity; i++)
+                        {
+                            if (!customeErrors[i].Invoke(numbers[i].GetValue()))
+                                return;
+                        }
+                    }
+                    if (numbers.Any(n => n.NumberType == NumberType.Real))
+                        machine.Exe.Push(new Real(floatOp(numbers.Select(n => n.GetValue()).ToList())));
+                    else
+                        machine.Exe.Push(new Integer(intOp(numbers.Cast<Integer>().Select(i => i.Value).ToList())));
                 }
             });
         }

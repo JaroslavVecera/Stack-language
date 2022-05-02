@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace Stacl
 {
-    class True : Value
+    public class True : Value
     {
         public True() : base(ValueType.Boolean) { }
 

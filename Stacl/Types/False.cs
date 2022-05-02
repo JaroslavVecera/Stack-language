@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace Stacl
 {
-    class False : Value, IList
+    public class False : Value, IList
     {
         public False() : base(ValueType.Boolean) { }
         public Value Head { get { return this; } }

@@ -36,6 +36,12 @@ namespace Stacl
             factories.ForEach(f => f.Generate(this));
         }
 
+        public void RaiseError(Error e)
+        {
+            Exe.Clear();
+            Exe.Push(e);
+        }
+
         public Value PopCode()
         {
             Value head = Code.Head;

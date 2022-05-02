@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 
 namespace Stacl
 {
-    class Real : Number
+    public class Real : Number
     {
         public double Value { get; private set; }
 
@@ -19,6 +19,11 @@ namespace Stacl
         public override string ToString()
         {
             return Value.ToString(CultureInfo.InvariantCulture);
+        }
+
+        public override double GetValue()
+        {
+            return Value;
         }
     }
 }

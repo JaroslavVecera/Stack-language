@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace Stacl
 {
-    class Pair : Value, IList
+    public class Pair : Value, IList
     {
         public Value Head { get; private set; }
         public IList Rest { get; private set; }

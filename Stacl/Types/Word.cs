@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace Stacl
 {
-    class Word : Value
+    public class Word : Value
     {
         public static string ResolveToken { get; } = "resolve";
         public string String { get; private set; }

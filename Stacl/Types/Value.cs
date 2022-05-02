@@ -16,6 +16,23 @@ namespace Stacl
         BIF
     }
 
+    static class ValueTypeExtensions
+    {
+        public static string GetLabel(this ValueType type)
+        {
+            switch (type)
+            {
+                case ValueType.Number: return "number";
+                case ValueType.Word: return "word";
+                case ValueType.Pair: return "pair";
+                case ValueType.Boolean: return "bool";
+                case ValueType.Error: return "error";
+                case ValueType.BIF: return "function";
+                default: return "";
+            }
+        }
+    }
+
     public abstract class Value
     {
         public ValueType Type { get; private set; }

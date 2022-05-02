@@ -11,7 +11,7 @@ namespace Stacl
         Integer, Real
     }
 
-    class Number : Value
+    public abstract class Number : Value
     {
         public NumberType NumberType { get; private set; }
 
@@ -19,5 +19,7 @@ namespace Stacl
         {
             NumberType = type;
         }
+
+        public abstract double GetValue();
     }
 }

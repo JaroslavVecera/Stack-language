@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace Stacl
 {
-    class Integer : Number
+    public class Integer : Number
     {
         public int Value { get; private set; }
 
@@ -18,6 +18,11 @@ namespace Stacl
         public override string ToString()
         {
             return Value.ToString();
+        }
+
+        public override double GetValue()
+        {
+            return Value;
         }
     }
 }
