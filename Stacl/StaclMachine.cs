@@ -29,7 +29,7 @@ namespace Stacl
         {
             List<IEnvironmentFactory> factories = new List<IEnvironmentFactory>()
             {
-                new AritmeticEnvironmentFactory(),
+                new ArithmeticEnvironmentFactory(),
                 new FlowEnvironmentFactory(),
                 new ListEnvironmentFactory()
             };
