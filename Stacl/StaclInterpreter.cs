@@ -12,17 +12,16 @@ namespace Stacl
         public Value Eval(string expr)
         {
             StaclMachine.Clear();
-            StaclMachine.Code = Parser.ParseItems(expr);
+            StaclMachine.Code = Parser.ParseItemsTest(expr);
             while (StaclMachine.AnyCode)
             {
-                Value val = StaclMachine.Code.Pop();
+                Value val = StaclMachine.PopCode();
                 Eval(val);
             }
             if (!StaclMachine.AnyExe)
                 throw new EmptyStack();
             return StaclMachine.Exe.Pop();
         }
-
 
         void Eval(Value v)
         {
@@ -36,12 +35,26 @@ namespace Stacl
                 StaclMachine.Exe.Push(v);
             else if (v.Type == ValueType.Word)
                 EvalWord((Word)v);
+            else if (v.Type == ValueType.Pair)
+                EvalList((Pair)v);
+        }
+
+        void EvalList(IList p)
+        {
+            Stack<Value> s = new Stack<Value>();
+            while (p.ToBool())
+            {
+                s.Push(p.Head);
+                p = p.Rest;
+            }
+            while (s.Count > 0)
+                StaclMachine.Code = new Pair(s.Pop(), StaclMachine.Code);
         }
 
         void EvalWord(Word w)
         {
             if (w.IsResolveToken)
-                StaclMachine.Exe.Push(new Boolean(false));
+                StaclMachine.Exe.Push(new False());
             else
             {
                 StaclMachine.Exe.Push(WordBinding(w));

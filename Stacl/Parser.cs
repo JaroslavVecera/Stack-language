@@ -9,50 +9,73 @@ namespace Stacl
 {
     public class Parser
     {
-        public Stack<Value> ParseItems(string expr)
+        ParserData Data { get; set; }
+
+        public IList ParseItemsTest(string expression)
         {
-            List<Value> result = new List<Value>();
-            int line = 0;
-            string buffer = "";
-            int character;
-            int linChar = 0;
-            for (character = 0; character < expr.Length; character++)
+            Data = new ParserData();
+            IList p = ParseList(expression + "}");
+            if (Data.Depth != -1)
+                throw new NotImplementedException();
+            else
+                return p;
+        }
+
+        IList ParseList(string expr)
+        {
+            int startDepth = Data.Depth;
+            Stack<Value> listItems = new Stack<Value>();
+            for (; Data.Character < expr.Length; Data.Character++)
             {
-                char c = expr[character];
+                char c = expr[Data.Character];
                 if (char.IsWhiteSpace(c) || c == '{')
                 {
-                    if (buffer.Length > 0)
-                        result.Add(ParseItem(buffer, linChar - buffer.Length + 1, line + 1));
-                    buffer = "";
-                    if (c == '\n')
+                    if (Data.Buffer.Length > 0)
+                        listItems.Push(ParseItem(Data.Buffer, Data.LinChar - Data.Buffer.Length + 1, Data.Line + 1));
+                    Data.Buffer = "";
+                    if (c == '{')
                     {
-                        if (expr[character + 1] == '\r')
+                        Data.Depth++;
+                        Data.Character++;
+                        Data.LinChar++;
+                        listItems.Push((Value)ParseList(expr));
+                    }
+                    else if (c == '\n')
+                    {
+                        if (expr[Data.Character + 1] == '\r')
                         {
-                            linChar++;
-                            character++;
+                            Data.LinChar++;
+                            Data.Character++;
                         }
-                        line++;
+                        Data.Line++;
                     }
                     else if (c == '\r')
                     {
-                        if (expr[character + 1] == '\n')
+                        if (expr[Data.Character + 1] == '\n')
                         {
-                            linChar++;
-                            character++;
+                            Data.LinChar++;
+                            Data.Character++;
                         }
-                        line++;
+                        Data.Line++;
                     }
                 }
-                else
+                else if (c == '}')
                 {
-                    buffer += c;
+                    if (Data.Buffer.Length > 0)
+                        listItems.Push(ParseItem(Data.Buffer, Data.LinChar - Data.Buffer.Length + 1, Data.Line + 1));
+                    Data.Buffer = "";
+                    Data.Depth--;
+                    if (Data.Depth + 1 == startDepth)
+                        break;
                 }
-                linChar++;
+                else
+                    Data.Buffer += c;
+                Data.LinChar++;
             }
-            if (buffer.Length > 0)
-                result.Add(ParseItem(buffer, linChar - buffer.Length + 1, line + 1));
-            result.Reverse();
-            return new Stack<Value>(result);
+            IList tail = new False();
+            while (listItems.Any())
+                tail = new Pair(listItems.Pop(), tail);
+            return tail;
         }
 
         Value ParseItem(string item, int character, int line)
@@ -70,9 +93,9 @@ namespace Stacl
         Value ParseBoolOrWord(string item, int character, int line)
         {
             if (item == "true")
-                return new Boolean(true);
+                return new True();
             else if (item == "false")
-                return new Boolean(false);
+                return new False();
             else
                 return new Word(item);
         }

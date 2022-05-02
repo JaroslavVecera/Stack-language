@@ -6,25 +6,41 @@ using System.Threading.Tasks;
 
 namespace Stacl
 {
-    class StaclMachine
+    public class StaclMachine
     {
-        public Stack<Value> Code { get; set; } = new Stack<Value>();
+        public IList Code { get; set; }
         public Stack<Value> Exe { get; } = new Stack<Value>();
         public Dictionary<string, Value> Environment { get; set; } = new Dictionary<string, Value>();
 
-        public int CodeCount { get { return Code.Count; } }
-        public int ExeCount { get { return Code.Count; } }
-        public bool AnyCode { get { return Code.Count > 0; } } 
+        public int ExeCount { get { return Exe.Count; } }
+        public bool AnyCode { get { return Code.ToBool(); } } 
         public bool AnyExe { get { return Exe.Count > 0; } }
         public bool IsError { get { return AnyExe && Exe.Peek().Type == ValueType.Error; } }
 
         public void Clear()
         {
-            Code.Clear();
+            Code = null;
             Exe.Clear();
 
-            var factory = new EnvironmentFactory();
-            factory.Generate(this);
+            GenerateEnvironment();
+        }
+
+        void GenerateEnvironment()
+        {
+            List<IEnvironmentFactory> factories = new List<IEnvironmentFactory>()
+            {
+                new AritmeticEnvironmentFactory(),
+                new FlowEnvironmentFactory(),
+                new ListEnvironmentFactory()
+            };
+            factories.ForEach(f => f.Generate(this));
+        }
+
+        public Value PopCode()
+        {
+            Value head = Code.Head;
+            Code = Code.Rest;
+            return head;
         }
     }
 }

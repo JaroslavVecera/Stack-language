@@ -6,12 +6,12 @@ using System.Threading.Tasks;
 
 namespace Stacl
 {
-    class Pair : Value
+    class Pair : Value, IList
     {
         public Value Head { get; private set; }
-        public Value Rest { get; private set; }
+        public IList Rest { get; private set; }
 
-        public Pair(Value head, Value rest) : base(ValueType.Pair)
+        public Pair(Value head, IList rest) : base(ValueType.Pair)
         {
             Head = head;
             Rest = rest;
